@@ -20,5 +20,7 @@ from lifeapp import views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('register/',views.UserRegisterView.as_view())
+    path('register/',views.UserRegisterView.as_view()),
+    path('login',views.LoginView.as_view()),
+    path('connection/send',views.SendConnectionRequestView.as_view())
 ]
