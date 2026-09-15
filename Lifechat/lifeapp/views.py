@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from rest_framework.generics import CreateAPIView,ListAPIView
-from lifeapp.serializers import RegisterSerializer,LoginSerializer,ConnectionRequestSerializer,ConnectionSerialzer
+from lifeapp.serializers import RegisterSerializer,LoginSerializer,ConnectionRequestSerializer,ConnectionSerializer
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.authtoken.models import Token 
@@ -33,4 +33,53 @@ class LoginView(APIView):
 class SendConnectionRequestView(CreateAPIView):
     authentication_classes=[authentication.TokenAuthentication]
     permission_classes=[permissions.IsAuthenticated]   
-    serializer_class=ConnectionRequestSerializer 
+    serializer_class=ConnectionRequestSerializer
+
+class AcceptConnectionRequestView(APIView):
+    authentication_classes=[authentication.TokenAuthentication]
+    permission_classes=[permissions.IsAuthenticated]
+
+    def post(self,request,pk):
+        try:
+            connection=Connection.objects.get(pk=pk,to_user=request.user,status='pending')
+        except Connection.DoesNotExist:
+            return Response({"msg":"no pending requests found"})
+        connection.status='accepted'
+        connection.save()
+        return Response({"msg":"connection accepted"})
+
+class RejectedConnectionRequestView(APIView):
+    authentication_classes=[authentication.TokenAuthentication]
+    permission_classes=[permissions.IsAuthenticated]
+
+    def post(self,request,pk):
+        try:
+            connection=Connection.objects.get(pk=pk,to_user=request.user,status='pending')
+        except Connection.DoesNotExist:
+            return Response({"msg":"no pending requests found"},status=status.HTTP_404_NOT_FOUND)
+        connection.status='rejected'
+        connection.save()
+        return Response({"msg":"connection rejected"})
+
+
+class PendingRequestListView(ListAPIView):
+    authentication_classes=[authentication.TokenAuthentication]
+    permission_classes=[permissions.IsAuthenticated]
+    serializer_class=ConnectionSerializer
+
+    def get_queryset(self):
+        return Connection.objects.filter(to_user=self.request.user,status='pending')
+    
+
+class MyConnectionListView(ListAPIView):
+    authentication_classes=[authentication.TokenAuthentication]
+    permission_classes=[permissions.IsAuthenticated]
+    serializer_class=ConnectionSerializer
+
+    def get_queryset(self):
+        user=self.request.user
+        return Connection.objects.filter(
+            Q(from_user=user) | Q(to_user=user),
+            status='accepted'
+        )
+    

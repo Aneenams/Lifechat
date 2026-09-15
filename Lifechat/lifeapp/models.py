@@ -41,10 +41,10 @@ class Profile(models.Model):
     address_visibility=models.CharField(max_length=20,choices=ADDRESS_VISIBILITY_CHOICES)
     account_type=models.CharField(max_length=20,choices=ACCOUNT_TYPE_CHOICES)
     blood_group=models.CharField(max_length=10,choices=BLOOD_GROUP_CHOICES)
-    blood_status=models.CharField(max_length=20,choices=BLOOD_STATUS_CHOICES,default=None)
+    blood_status=models.CharField(max_length=20,choices=BLOOD_STATUS_CHOICES,default='available')
     city=models.CharField(max_length=50)
     donation_availability=models.DateField(null=True,blank=True)
-    badge_tier=models.CharField(max_length=10,choices=BADGE_TIER_CHOICES,default=None)
+    badge_tier=models.CharField(max_length=10,choices=BADGE_TIER_CHOICES,default='available')
     verified_donation_count=models.PositiveIntegerField(default=0)
 
     def __str__(self):

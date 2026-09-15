@@ -8,10 +8,11 @@ Content-Type: application/json
     "username":"ali",
     "email":"ali@gmail.com",
     "password":"pass123",
-    "phone_number":"5432987000",
-    "address":"",
-    "blood_group":"A+",
-    "city":"Pala",
+    "password2":"pass123",
+    "phone_number":"5432900000",
+    "address":"pala street ,apartment 24",
+    "blood_group":"B+",
+    "city":"pala",
     "account_type":"public"
 }
 
@@ -25,3 +26,37 @@ Content-Type: application/json
     "username":"ali",
     "password":"pass123"
 }
+
+#alibaba
+###  
+# @token=32bf780bcc12e13eb944302cf02ca238ea8fbed3
+
+#ali
+###
+@token=5654e2f6f4a3fce1d589fe424a8524233e0e1225
+
+# API call for send connection request
+###
+POST http://127.0.0.1:8000/connection/send 
+Content-Type: application/json
+Authorization: Token {{token}}
+
+{
+    "to_user_id":8
+}
+
+# API call for get pending request
+###
+GET http://127.0.0.1:8000/connection/pending
+Authorization:Token {{token}}
+
+
+# API call for accept pending request
+###
+POST http://127.0.0.1:8000/connection/accept/8
+Authorization:Token {{token}}
+
+# API call for view connections
+###
+POST http://127.0.0.1:8000/connection/myconnections
+Authorization: Token {{token}}

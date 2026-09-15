@@ -22,5 +22,9 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('register/',views.UserRegisterView.as_view()),
     path('login',views.LoginView.as_view()),
-    path('connection/send',views.SendConnectionRequestView.as_view())
+    path('connection/send',views.SendConnectionRequestView.as_view()),
+    path('connection/accept/<int:pk>',views.AcceptConnectionRequestView.as_view()),
+    path('connection/rejected/<int:pk>',views.RejectedConnectionRequestView.as_view()),
+    path('connection/pending',views.PendingRequestListView.as_view()),
+    path('connection/myconnections',views.MyConnectionListView.as_view())
 ]

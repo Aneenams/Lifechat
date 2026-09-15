@@ -79,7 +79,7 @@ class ConnectionRequestSerializer(serializers.Serializer):
         to_user_id=data['to_user_id']
 
         if to_user_id==request_user.id:
-            raise serializers.ValidationError("enthonna kanikkane , agage onnum request edan pattula")
+            raise serializers.ValidationError("enthonna kanikkane , agage onnum request edan pattula, cannod send request to yourself")
 
         if not User.objects.filter(id=to_user_id).exists():
             raise serializers.ValidationError("agane oru user ellalloo👀")
@@ -96,7 +96,7 @@ class ConnectionRequestSerializer(serializers.Serializer):
             to_user_id=validated_data['to_user_id']
         )
 
-class ConnectionSerialzer(serializers.ModelSerializer):
+class ConnectionSerializer(serializers.ModelSerializer):
     from_username=serializers.CharField(source='from_user.username',read_only=True)
     to_username=serializers.CharField(source='to_user.username',read_only=True) 
 
