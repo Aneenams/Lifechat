@@ -102,4 +102,47 @@ class ConnectionSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Connection
-        fields=['id','from_username','to_username','status','created_at']   
+        fields=['id','from_username','to_username','status','created_at'] 
+
+
+#16/sepy
+class ProfileSerializer(serializers.ModelSerializer):
+    username=serializers.CharField(source='user.username',read_only=True)
+
+    class Meta:
+        model=Profile
+        fields=['username', 'phone_number', 'address', 'address_visibility',
+            'account_type', 'blood_group', 'blood_status', 'city',
+            'donation_availability', 'badge_tier', 'verified_donation_count']
+        read_only_fields=['blood_group', 'account_type', 'badge_tier', 'verified_donation_count']          
+
+class DirectoryProfileSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(source='user.username', read_only=True)
+
+    class Meta:
+        model = Profile
+        fields = [
+            'username', 'blood_group', 'blood_status', 'city',
+            'donation_availability', 'badge_tier',
+            'phone_number', 'address',
+        ]
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        request = self.context.get('request')
+        viewer = request.user
+
+        is_public = instance.address_visibility == 'public'
+        is_self = instance.user_id == viewer.id
+        is_connected = Connection.objects.filter(
+            status='accepted'
+        ).filter(
+            Q(from_user=viewer, to_user=instance.user) |
+            Q(from_user=instance.user, to_user=viewer)
+        ).exists()
+
+        if not (is_public or is_self or is_connected):
+            data.pop('phone_number', None)
+            data.pop('address', None)
+
+        return data        

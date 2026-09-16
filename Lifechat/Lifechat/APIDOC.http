@@ -5,14 +5,14 @@ POST http://127.0.0.1:8000/register/
 Content-Type: application/json
 
 {
-    "username":"ali",
-    "email":"ali@gmail.com",
+    "username":"ammu",
+    "email":"ammu@gmail.com",
     "password":"pass123",
     "password2":"pass123",
-    "phone_number":"5432900000",
-    "address":"pala street ,apartment 24",
-    "blood_group":"B+",
-    "city":"pala",
+    "phone_number":"5432900500",
+    "address":"kochi street ,apartment 24",
+    "blood_group":"O-",
+    "city":"kochi",
     "account_type":"public"
 }
 
@@ -23,17 +23,21 @@ POST  http://127.0.0.1:8000/login
 Content-Type: application/json
 
 {
-    "username":"ali",
+    "username":"ammu",
     "password":"pass123"
 }
 
 #alibaba
-###  
+###
 # @token=32bf780bcc12e13eb944302cf02ca238ea8fbed3
 
 #ali
 ###
-@token=5654e2f6f4a3fce1d589fe424a8524233e0e1225
+# @token=5654e2f6f4a3fce1d589fe424a8524233e0e1225
+
+#ammu
+###
+@token=9837322731228223553f49ea16bac2dae6fb121f
 
 # API call for send connection request
 ###
@@ -42,7 +46,7 @@ Content-Type: application/json
 Authorization: Token {{token}}
 
 {
-    "to_user_id":8
+    "to_user_id":9
 }
 
 # API call for get pending request
@@ -53,10 +57,32 @@ Authorization:Token {{token}}
 
 # API call for accept pending request
 ###
-POST http://127.0.0.1:8000/connection/accept/8
+POST http://127.0.0.1:8000/connection/accept/4
 Authorization:Token {{token}}
 
 # API call for view connections
 ###
-POST http://127.0.0.1:8000/connection/myconnections
+GET  http://127.0.0.1:8000/connection/myconnections
+Authorization: Token {{token}}
+
+
+# API call for profile view
+###
+GET  http://127.0.0.1:8000/profile/my
+Authorization: Token {{token}}
+
+# Api call for update profile
+###
+PATCH http://127.0.0.1:8000/profile/my
+Authorization: Token {{token}}
+Content-Type: application/json
+
+{
+    "city":"kochi",
+    "blood_status":"available"
+}
+
+# API call for search blood
+###
+GET http://127.0.0.1:8000/directory/search?blood_group=A+&city=Kochi
 Authorization: Token {{token}}

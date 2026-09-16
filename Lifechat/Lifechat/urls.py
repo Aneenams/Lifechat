@@ -26,5 +26,7 @@ urlpatterns = [
     path('connection/accept/<int:pk>',views.AcceptConnectionRequestView.as_view()),
     path('connection/rejected/<int:pk>',views.RejectedConnectionRequestView.as_view()),
     path('connection/pending',views.PendingRequestListView.as_view()),
-    path('connection/myconnections',views.MyConnectionListView.as_view())
+    path('connection/myconnections',views.MyConnectionListView.as_view()),
+    path('profile/my',views.MyProfileView.as_view()),
+    path('directory/search',views.DirectorySearchView.as_view())
 ]

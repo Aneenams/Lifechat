@@ -1,13 +1,14 @@
 from django.shortcuts import render
-from rest_framework.generics import CreateAPIView,ListAPIView
-from lifeapp.serializers import RegisterSerializer,LoginSerializer,ConnectionRequestSerializer,ConnectionSerializer
+from rest_framework.generics import CreateAPIView,ListAPIView,RetrieveUpdateAPIView
+from lifeapp.serializers import RegisterSerializer,LoginSerializer,ConnectionRequestSerializer,ConnectionSerializer,ProfileSerializer,DirectoryProfileSerializer
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.authtoken.models import Token 
 
 from rest_framework import authentication,permissions,status
 from django.db.models import Q
-from lifeapp.models import Connection
+from lifeapp.models import Connection,Profile
+from lifeapp.utils import get_compactable_donor_types
 # Create your views here.
 class UserRegisterView(CreateAPIView):
     serializer_class=RegisterSerializer
@@ -82,4 +83,32 @@ class MyConnectionListView(ListAPIView):
             Q(from_user=user) | Q(to_user=user),
             status='accepted'
         )
-    
+
+#16/sept    
+class MyProfileView(RetrieveUpdateAPIView):
+    serializer_class=ProfileSerializer
+    authentication_classes=[authentication.TokenAuthentication]
+    permission_classes=[permissions.IsAuthenticated]
+
+    def get_object(self):
+        return self.request.user.profile
+
+class DirectorySearchView(ListAPIView):
+    serializer_class = DirectoryProfileSerializer
+    authentication_classes = [authentication.TokenAuthentication]
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        blood_group = self.request.query_params.get('blood_group')
+        city = self.request.query_params.get('city')
+
+        compatible_types = get_compactable_donor_types(blood_group)
+        queryset = Profile.objects.filter(
+            blood_group__in=compatible_types,
+            blood_status='available',
+        ).exclude(user=self.request.user)
+
+        if city:
+            queryset = queryset.filter(city__iexact=city)
+
+        return queryset    
