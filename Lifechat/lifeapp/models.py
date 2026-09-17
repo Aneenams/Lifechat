@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 from datetime import datetime
+
 # Create your models here.
 
 
@@ -68,3 +69,22 @@ class Connection(models.Model):
 
     def __str__(self):
         return f"{self.from_user.username} --> {self.to_user.username} ({self.status})"  
+
+
+
+# 17 sept
+class Donation(models.Model):
+    STATUS_CHOICES=(
+        ('pending','Pending'),
+        ('approved','Approved'),
+        ('rejected','Rejected')
+    )
+
+    donor=models.ForeignKey(User,on_delete=models.CASCADE, related_name='donations')
+    donation_date=models.DateField()
+    proof_image=models.ImageField(upload_to='donation_proofs/',blank=True,null=True)
+    status=models.CharField(max_length=10,choices=STATUS_CHOICES,default='pending')
+    admin_notes=models.CharField(max_length=200, blank=True, null=True)
+    verified_by=models.ForeignKey(User,on_delete=models.SET_NULL,null=True,blank=True,related_name='verified_donations')
+    verified_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)

@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
-from lifeapp.models import Profile,Connection
+from lifeapp.models import Profile,Connection,Donation
 
 from django.contrib.auth import authenticate   #14 sept
 from django.db.models import Q 
@@ -146,3 +146,21 @@ class DirectoryProfileSerializer(serializers.ModelSerializer):
             data.pop('address', None)
 
         return data        
+
+
+# 17/sept
+class DonationCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Donation
+        fields = ['donation_date', 'proof_image']
+
+class DonationSerializer(serializers.ModelSerializer):
+    donor_username = serializers.CharField(source='donor.username', read_only=True)
+    verified_by_username = serializers.CharField(source='verified_by.username', read_only=True)
+
+    class Meta:
+        model = Donation
+        fields = [
+            'id', 'donor_username', 'donation_date', 'status',
+            'admin_notes', 'verified_by_username', 'verified_at', 'created_at',
+        ]  
