@@ -10,7 +10,12 @@ from django.db.models import Q
 from lifeapp.models import Connection,Profile,Donation
 from lifeapp.utils import get_compactable_donor_types
 
-from datetime import timezone
+from datetime import timezone,date 
+
+
+from .utils import apply_donation_cooldown, calculate_badge_tier
+from .utils import get_compactable_donor_types, refresh_expired_cooldowns
+
 # Create your views here.
 class UserRegisterView(CreateAPIView):
     serializer_class=RegisterSerializer
@@ -179,3 +184,50 @@ class RejectDonationView(APIView):
 
         return Response({"msg": "donation rejected"}, status=status.HTTP_200_OK)
 
+
+
+#19/sept
+
+
+class ApproveDonationView(APIView):
+    authentication_classes = [authentication.TokenAuthentication]
+    permission_classes = [permissions.IsAdminUser]
+
+    def post(self, request, pk):
+        try:
+            donation = Donation.objects.get(pk=pk, status='pending')
+        except Donation.DoesNotExist:
+            return Response({"msg": "no pending donation found"}, status=status.HTTP_404_NOT_FOUND)
+
+        donation.status = 'approved'
+        donation.verified_by = request.user
+        donation.verified_at = timezone.now()
+        donation.save()
+
+        profile = donation.donor.profile
+        profile.verified_donation_count += 1
+        profile.badge_tier = calculate_badge_tier(profile.verified_donation_count)
+        apply_donation_cooldown(profile)
+        profile.save()
+
+
+
+class DirectorySearchView(ListAPIView):
+    serializer_class = DirectoryProfileSerializer
+    authentication_classes = [authentication.TokenAuthentication]
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        refresh_expired_cooldowns()
+
+        blood_group = self.request.query_params.get('blood_group')
+        city = self.request.query_params.get('city')
+        compatible_types = get_compactable_donor_types(blood_group)
+
+        queryset = Profile.objects.filter(
+            blood_group__in=compatible_types,
+            blood_status='available',
+        ).exclude(user=self.request.user)
+
+        if city:
+            queryset = queryset.filter(city__iexact=city)
