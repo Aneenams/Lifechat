@@ -23,8 +23,8 @@ POST  http://127.0.0.1:8000/login
 Content-Type: application/json
 
 {
-    "username":"ammu",
-    "password":"pass123"
+    "username":"superadmin",
+    "password":"superadmin123"
 }
 
 #alibaba
@@ -39,6 +39,9 @@ Content-Type: application/json
 ###
 @token=9837322731228223553f49ea16bac2dae6fb121f
 
+#superadmin
+###
+@admintoken=dcde332e4bd7ed4dbec0385f8113eb8e543e75d8
 # API call for send connection request
 ###
 POST http://127.0.0.1:8000/connection/send 
@@ -107,12 +110,12 @@ Authorization: Token {{token}}
 # API call for view pending donationa
 ###
 GET  http://127.0.0.1:8000/donation/pending
-Authorization: Token {{token}}
+Authorization: Token {{admintoken}}
 
 #approve donation
 ###
 POST http://127.0.0.1:8000/donation/approve/1
-Authorization: Token {{token}}
+Authorization: Token {{admintoken}}
 
 
 #reject donation
@@ -123,4 +126,20 @@ Content-Type: application/json
 
 {
     "admin_notes":"Proof image unreadable, please resubmit"
+}
+
+#19/sept
+### Should show blood_status back to "available" now
+GET http://127.0.0.1:8000/profile/my
+Authorization: Token {{token}}
+
+
+#api test for donation submit
+###
+POST http://127.0.0.1:8000/donation/submit
+Authorization: Token {{token}}
+Content-Type: application/json
+
+{
+  "donation_date": "2026-10-01"
 }

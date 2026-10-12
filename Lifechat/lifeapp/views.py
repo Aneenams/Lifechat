@@ -10,7 +10,8 @@ from django.db.models import Q
 from lifeapp.models import Connection,Profile,Donation
 from lifeapp.utils import get_compactable_donor_types
 
-from datetime import timezone,date 
+from datetime import date 
+from django.utils import timezone
 
 
 from .utils import apply_donation_cooldown, calculate_badge_tier
@@ -93,12 +94,13 @@ class MyConnectionListView(ListAPIView):
 
 #16/sept    
 class MyProfileView(RetrieveUpdateAPIView):
-    serializer_class=ProfileSerializer
-    authentication_classes=[authentication.TokenAuthentication]
-    permission_classes=[permissions.IsAuthenticated]
+    serializer_class = ProfileSerializer
+    authentication_classes = [authentication.TokenAuthentication]
+    permission_classes = [permissions.IsAuthenticated]
 
     def get_object(self):
-        return self.request.user.profile
+        refresh_expired_cooldowns()
+        return Profile.objects.get(user=self.request.user)
 
 class DirectorySearchView(ListAPIView):
     serializer_class = DirectoryProfileSerializer
@@ -106,10 +108,12 @@ class DirectorySearchView(ListAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
+        refresh_expired_cooldowns()
+
         blood_group = self.request.query_params.get('blood_group')
         city = self.request.query_params.get('city')
-
         compatible_types = get_compactable_donor_types(blood_group)
+
         queryset = Profile.objects.filter(
             blood_group__in=compatible_types,
             blood_status='available',
@@ -131,37 +135,39 @@ class SubmitDonationView(CreateAPIView):
     def perform_create(self, serializer):
         serializer.save(donor=self.request.user)
 
-class MyDonationListView(ListAPIView):     
-    serializer_class=DonationSerializer
-    authentication_classes=[authentication.TokenAuthentication]
-    permission_classes=[permissions.IsAuthenticated]   
+class MyDonationListView(ListAPIView):
+    serializer_class = DonationSerializer
+    authentication_classes = [authentication.TokenAuthentication]
+    permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        return Donation.objects.filter(status='pending').order_by('-created_at')
+        return Donation.objects.filter(donor=self.request.user).order_by('-created_at')
 
 class PendingDonationListView(ListAPIView):
-    serializer_class=DonationCreateSerializer
+    serializer_class=DonationSerializer
     authentication_classes=[authentication.TokenAuthentication]
-    permission_classes=[permissions.IsAuthenticated]    
+    permission_classes=[permissions.IsAdminUser]    
     queryset=Donation.objects.filter(status='pending').order_by('created_at')
 
 class ApproveDonationView(APIView):
-    authentication_classes=[authentication.TokenAuthentication]
-    permission_classes=[permissions.IsAdminUser]
+    authentication_classes = [authentication.TokenAuthentication]
+    permission_classes = [permissions.IsAdminUser]
 
-    def post(self,request,pk):
+    def post(self, request, pk):
         try:
-            donation=Donation.objects.get(pk=pk, status='pending')
+            donation = Donation.objects.get(pk=pk, status='pending')
         except Donation.DoesNotExist:
-            return Response({"msg":'no pending donation found'},status=status.HTTP_404_NOT_FOUND)
+            return Response({"msg": "no pending donation found"}, status=status.HTTP_404_NOT_FOUND)
 
-        donation_status='approved'
-        donation.verified_by=request.user
-        donation.verified_at=timezone.now()
-        donation.save() 
+        donation.status = 'approved'
+        donation.verified_by = request.user
+        donation.verified_at = timezone.now()
+        donation.save()
 
-        profile=donation.donor.profile
+        profile = donation.donor.profile
         profile.verified_donation_count += 1
+        profile.badge_tier = calculate_badge_tier(profile.verified_donation_count)
+        apply_donation_cooldown(profile)
         profile.save()
 
         return Response({"msg": "donation approved"}, status=status.HTTP_200_OK)
@@ -189,45 +195,4 @@ class RejectDonationView(APIView):
 #19/sept
 
 
-class ApproveDonationView(APIView):
-    authentication_classes = [authentication.TokenAuthentication]
-    permission_classes = [permissions.IsAdminUser]
 
-    def post(self, request, pk):
-        try:
-            donation = Donation.objects.get(pk=pk, status='pending')
-        except Donation.DoesNotExist:
-            return Response({"msg": "no pending donation found"}, status=status.HTTP_404_NOT_FOUND)
-
-        donation.status = 'approved'
-        donation.verified_by = request.user
-        donation.verified_at = timezone.now()
-        donation.save()
-
-        profile = donation.donor.profile
-        profile.verified_donation_count += 1
-        profile.badge_tier = calculate_badge_tier(profile.verified_donation_count)
-        apply_donation_cooldown(profile)
-        profile.save()
-
-
-
-class DirectorySearchView(ListAPIView):
-    serializer_class = DirectoryProfileSerializer
-    authentication_classes = [authentication.TokenAuthentication]
-    permission_classes = [permissions.IsAuthenticated]
-
-    def get_queryset(self):
-        refresh_expired_cooldowns()
-
-        blood_group = self.request.query_params.get('blood_group')
-        city = self.request.query_params.get('city')
-        compatible_types = get_compactable_donor_types(blood_group)
-
-        queryset = Profile.objects.filter(
-            blood_group__in=compatible_types,
-            blood_status='available',
-        ).exclude(user=self.request.user)
-
-        if city:
-            queryset = queryset.filter(city__iexact=city)
